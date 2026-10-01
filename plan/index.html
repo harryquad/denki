@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電気料金プラン 比較シミュレーション｜基本料金・段階料金から毎月の電気代を比べる</title>
+<meta name="description" content="今の電気料金プランと別のプランの基本料金・電力量料金（段階料金にも対応）を入れるだけで、毎月・1年の電気代の差を計算。使用量ごとの比較表と、どの使用量から安くなるかもわかる無料ツールです。再エネ賦課金（2026年度4.18円）にも対応。">
+<link rel="canonical" href="https://harryquad.github.io/denki/plan/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:560px){.cols{grid-template-columns:1fr}}.cols h3{margin:0 0 8px;font-size:1rem}</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>電気料金プラン 比較シミュレーション</h1>
+  <p class="lead">今の電気料金プランと、検討中のプランの料金を入れると、<strong>毎月・1年の電気代の差</strong>を計算します。検針票や電力会社のサイトに書かれている料金表の数字を、そのまま入れてください。</p>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label for="kwh">1か月の使用量（kWh）</label><input type="number" id="kwh" min="0" value="400"><div class="hint">検針票の「ご使用量」。季節で違うので、冬の月など</div></div>
+      <div class="field"><label for="fuel">燃料費調整単価（円/kWh）</label><input type="number" id="fuel" step="0.01" value="0"><div class="hint">検針票に記載。マイナスのこともあります。両方のプランに同じ値をかけます</div></div>
+    </div>
+    <div class="field" style="max-width:280px"><label for="renew">再エネ賦課金（円/kWh）</label><input type="number" id="renew" min="0" step="0.01" value="4.18"><div class="hint">2026年5月〜2027年4月の検針分は4.18円</div></div>
+    <div class="cols">
+      <div id="colA"><h3>今のプラン</h3></div>
+      <div id="colB"><h3>検討中のプラン</h3></div>
+    </div>
+    <button id="calc">比較する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>電気料金プランのよくある質問</h2>
+    <h3>電気料金はどう決まる？</h3>
+    <p>「基本料金」＋「電力量料金（使った量 × 単価）」＋「燃料費調整額」＋「再エネ賦課金」で決まります。電力量料金は、使う量が多いほど単価が上がる3段階の料金になっているプランが多いです。</p>
+    <h3>電力会社を変えると安くなる？</h3>
+    <p>使う量が多い家庭ほど、3段階目（300kWhを超える部分）の単価が安いプランや、基本料金がないプランに変えると下がりやすいです。一方、使う量が少ない家庭では、あまり変わらないこともあります。このツールで、自分の使用量での差を確かめてみましょう。</p>
+    <h3>切り替えの手続きは大変？</h3>
+    <p>新しい電力会社に申し込むだけで、今の電力会社への解約の連絡や工事は基本的に不要です（スマートメーターが設置されていない場合は、無料で交換されます）。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>入力した料金表にもとづく計算です。燃料費調整額は電力会社によって計算方法が違う場合があります。ポイント還元やセット割は含めていません。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const FIELDS = [["base", "基本料金（円/月）", 935, 0], ["t1", "〜120kWhの単価（円）", 30, 33], ["t2", "121〜300kWhの単価（円）", 36.6, 33], ["t3", "301kWh〜の単価（円）", 40.7, 33]];
+for (const [side, i] of [["A", 2], ["B", 3]]) {
+  $("col" + side).insertAdjacentHTML("beforeend", FIELDS.map(f =>
+    `<div class="field"><label for="${f[0]}${side}">${f[1]}</label><input type="number" id="${f[0]}${side}" min="0" step="0.01" value="${f[i]}"></div>`).join("") +
+    `<div class="hint">段階のない一律の単価なら、3つとも同じ単価を入れます</div>`);
+}
+
+function bill(side, kwh) {
+  const v = k => num(k + side);
+  const t1 = Math.min(kwh, 120), t2 = Math.min(Math.max(kwh - 120, 0), 180), t3 = Math.max(kwh - 300, 0);
+  const energy = t1 * v("t1") + t2 * v("t2") + t3 * v("t3");
+  const extra = kwh * (Number($("fuel").value) || 0) + Math.floor(kwh * num("renew"));
+  return Math.max(0, Math.floor(v("base") + energy + extra));
+}
+
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const kwh = num("kwh");
+  if (!kwh) { out.innerHTML = '<p class="err">使用量を入力してください。</p>'; return; }
+  const a = bill("A", kwh), b = bill("B", kwh);
+  const diff = a - b;
+  const levels = [100, 200, 300, 400, 500, 600, 800];
+  const cheaper = levels.map(k => bill("B", k) < bill("A", k));
+  // どの使用量から検討中のプランが安くなるか（すべて安い／すべて高い場合は特別に表示）
+  const crossMsg = cheaper.every(Boolean) ? " 表の使用量では、どの場合も検討中のプランの方が安くなります。"
+    : !cheaper.some(Boolean) ? " 表の使用量では、どの場合も今のプランの方が安くなります。"
+    : cheaper.indexOf(true) > cheaper.indexOf(false) ? ` 使用量が${levels[cheaper.indexOf(true)]}kWh前後より多い月は、検討中のプランの方が安くなる計算です。`
+    : ` 使用量が${levels[cheaper.indexOf(false)]}kWh前後より多い月は、今のプランの方が安くなる計算です。`;
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat"><div class="k">今のプラン（1か月）</div><div class="v">${yen(a)}</div></div>
+      <div class="stat"><div class="k">検討中のプラン（1か月）</div><div class="v">${yen(b)}</div></div>
+      <div class="stat ${diff > 0 ? "good" : "warn"}"><div class="k">切り替えると（1年）</div><div class="v">${diff >= 0 ? "−" : "+"}${yen(Math.abs(diff) * 12)}</div></div>
+    </div>
+    <h2 style="margin-top:14px">使用量ごとの比較</h2>
+    <table class="info"><tr><th>使用量</th><th class="num">今のプラン</th><th class="num">検討中のプラン</th><th class="num">差（月）</th></tr>
+      ${[...new Set(levels.concat(kwh))].sort((x, y) => x - y).map(k => { const x = bill("A", k), y = bill("B", k); return `<tr class="${k === kwh ? "best" : ""}"><td>${k}kWh</td><td class="num">${yen(x)}</td><td class="num">${yen(y)}</td><td class="num">${x - y >= 0 ? "−" : "+"}${yen(Math.abs(x - y))}</td></tr>`; }).join("")}
+    </table>
+    <p class="note">${diff > 0 ? `月${kwh}kWh使う場合、検討中のプランの方が<strong>月${yen(diff)}安く</strong>なります。` : `月${kwh}kWh使う場合は、今のプランの方が安いです。`}${crossMsg}冬と夏は使用量が増えるので、使用量が多い月の数字でも確認しておきましょう。</p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

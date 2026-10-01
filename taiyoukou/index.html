@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>太陽光発電 元が取れるか計算【2026年度の売電価格対応】｜回収年数と20年間の収支シミュレーション</title>
+<meta name="description" content="設置容量・費用・発電量・自家消費の割合を入れるだけで、太陽光発電の電気代削減額と売電収入、回収年数、20年間の収支を計算。2026年度の売電価格（最初の4年24円・5〜10年目8.3円）に対応した無料シミュレーションです。">
+<link rel="canonical" href="https://harryquad.github.io/denki/taiyoukou/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>太陽光発電 元が取れるか計算</h1>
+  <p class="lead">設置費用と発電量から、<strong>電気代がいくら下がり</strong>、<strong>売電でいくら入るか</strong>、<strong>何年で元が取れるか</strong>を計算します。2026年度の売電価格（最初の4年は24円、5〜10年目は8.3円）に対応しています。</p>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label for="kw">設置容量（kW）</label><input type="number" id="kw" min="0" step="0.1" value="5"><div class="hint">一般的な戸建ては4〜6kW</div></div>
+      <div class="field"><label for="cost">設置費用（総額）</label><input type="number" id="cost" min="0" value="135"><div class="hint">万円単位。見積もりの金額（補助金を引いたあと）</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="gen">1kWあたりの年間発電量（kWh）</label><input type="number" id="gen" min="0" value="1100"><div class="hint">全国平均はおよそ1,000〜1,200kWh。見積もりのシミュレーション値があればそれを</div></div>
+      <div class="field"><label for="self">自家消費の割合（%）</label><input type="number" id="self" min="0" max="100" value="30"><div class="hint">昼間に家で使う割合。昼間に家にいる時間が長いと高くなる</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="buy">買っている電気の単価（円/kWh）</label><input type="number" id="buy" min="0" step="0.1" value="35"><div class="hint">再エネ賦課金なども含めた単価</div></div>
+      <div class="field"><label for="after">11年目以降の売電単価（円/kWh）</label><input type="number" id="after" min="0" step="0.1" value="8"><div class="hint">固定価格の期間が終わったあとの目安</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="pcs">パワーコンディショナの交換費用</label><input type="number" id="pcs" min="0" value="25"><div class="hint">万円単位。15年目ごろに1回交換する想定</div></div>
+      <div class="field"><label for="years">計算する期間（年）</label><input type="number" id="years" min="5" max="30" value="20"></div>
+    </div>
+    <button id="calc">計算する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>太陽光発電のよくある質問</h2>
+    <h3>2026年度の売電価格は？</h3>
+    <p>住宅用（10kW未満）は、売電を始めてから最初の4年間が1kWhあたり24円、5〜10年目が8.3円です。早く元を取れるように、最初の数年の価格を高くする仕組み（初期投資支援スキーム）になっています。</p>
+    <h3>自家消費と売電、どちらが得？</h3>
+    <p>今は、電気を買う単価（30円台）の方が、売電の単価より高いことが多いので、発電した電気は自分の家で使う方が得です。昼間に洗濯機や食洗機を動かす、蓄電池やエコキュートと組み合わせるなどで、自家消費の割合を増やせます。</p>
+    <h3>何年で元が取れる？</h3>
+    <p>設置費用・日当たり・電気の使い方によって違いますが、一般的には10年前後が目安と言われます。見積もりは複数の会社から取って比べると、設置費用を抑えやすくなります。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>発電量は毎年0.5%ずつ下がるとして計算しています。売電価格は2026年度にFIT認定を受けた住宅用（10kW未満）の価格です。点検費用や、ローンの利息は含めていません。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const kw = num("kw"), cost = num("cost") * 10000;
+  if (!kw || !cost) { out.innerHTML = '<p class="err">設置容量と設置費用を入力してください。</p>'; return; }
+  const selfRate = Math.min(100, num("self")) / 100, buy = num("buy"), after = num("after");
+  const years = Math.floor(num("years"));
+  let cum = -cost, payback = null;
+  const rows = [];
+  for (let y = 1; y <= years; y++) {
+    const gen = kw * num("gen") * Math.pow(0.995, y - 1);
+    const sell = y <= 4 ? 24 : y <= 10 ? 8.3 : after;
+    const save = gen * selfRate * buy;
+    const income = gen * (1 - selfRate) * sell;
+    const repair = y === 15 ? num("pcs") * 10000 : 0;
+    const prev = cum;
+    cum += save + income - repair;
+    if (payback === null && cum >= 0) payback = y - 1 + (-prev) / (cum - prev);
+    rows.push({ y, gen, save, income, repair, cum });
+  }
+  const shown = rows.filter(r => r.y <= 5 || r.y % 5 === 0 || r.y === 11);
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat ${payback ? "good" : "warn"}"><div class="k">元が取れるまで</div><div class="v">${payback ? "約" + n1(payback) + "年" : `${years}年では取れない`}</div></div>
+      <div class="stat"><div class="k">1年目の効果（節約＋売電）</div><div class="v">${yen(rows[0].save + rows[0].income)}</div></div>
+      <div class="stat ${cum >= 0 ? "good" : "warn"}"><div class="k">${years}年間の収支</div><div class="v">${cum >= 0 ? "+" : "−"}${yen(Math.abs(cum))}</div></div>
+    </div>
+    <div style="overflow-x:auto"><table class="info">
+      <tr><th>年</th><th class="num">発電量</th><th class="num">電気代の節約</th><th class="num">売電収入</th><th class="num">累計の収支</th></tr>
+      ${shown.map(r => `<tr><td>${r.y}年目${r.repair ? "（交換）" : ""}</td><td class="num">${Math.round(r.gen).toLocaleString("ja-JP")}kWh</td><td class="num">${yen(r.save)}</td><td class="num">${yen(r.income)}</td><td class="num">${r.cum >= 0 ? "" : "−"}${yen(Math.abs(r.cum))}</td></tr>`).join("")}
+    </table></div>
+    <p class="note">自家消費の割合を${Math.round(selfRate * 100)}%から${Math.min(100, Math.round(selfRate * 100) + 20)}%に増やすと、電気を買う量がさらに減ります（蓄電池や昼間の家電の使い方で変わります）。設置費用は会社によって大きく違うので、複数の会社の見積もりを比べるのがおすすめです。</p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

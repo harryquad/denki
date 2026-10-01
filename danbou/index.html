@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>暖房器具の電気代・ガス代・灯油代 比較｜エアコン・こたつ・ストーブ、いちばん安いのは？</title>
+<meta name="description" content="エアコン・こたつ・ホットカーペット・電気ストーブ・オイルヒーター・電気毛布・ガスファンヒーター・石油ファンヒーターの1時間・1か月の暖房費を、電気・ガス・灯油の単価から比較。いちばん安い暖房がわかる無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/denki/danbou/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>暖房器具の電気代・ガス代・灯油代 比較</h1>
+  <p class="lead">エアコン・こたつ・ストーブなどの暖房器具ごとに、<strong>1時間・1か月の暖房費</strong>を比べます。電気・ガス・灯油の単価を今の値にすると、より正確になります。</p>
+
+  <div class="card">
+    <h2>単価</h2>
+    <div class="row">
+      <div class="field"><label for="e">電気（円/kWh）</label><input type="number" id="e" min="0" step="0.1" value="31"></div>
+      <div class="field"><label for="k">灯油（円/L）</label><input type="number" id="k" min="0" value="120"><div class="hint">最近の購入価格を入れてください</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="cg">都市ガス（円/m³）</label><input type="number" id="cg" min="0" value="180"><div class="hint">検針票の「ガス料金 ÷ 使用量」</div></div>
+      <div class="field"><label for="lp">プロパンガス（円/m³）</label><input type="number" id="lp" min="0" value="650"></div>
+    </div>
+    <h2>使い方</h2>
+    <div class="row">
+      <div class="field"><label for="hours">1日に使う時間</label><input type="number" id="hours" min="0" max="24" step="0.5" value="8"></div>
+      <div class="field"><label for="days">1か月に使う日数</label><input type="number" id="days" min="0" max="31" value="30"></div>
+    </div>
+    <button id="calc">比較する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>暖房費のよくある質問</h2>
+    <h3>いちばん安い暖房は？</h3>
+    <p>体を直接温める電気毛布・こたつ・ホットカーペットは、1時間あたりの費用がとても安いです。部屋全体を暖めるなら、効率の良いエアコンが安くなりやすく、ガスや灯油のファンヒーターは部屋がすぐ暖まる一方、燃料の単価しだいで費用が変わります。</p>
+    <h3>エアコンの暖房は高い？</h3>
+    <p>エアコンは、電気の力で外の空気の熱を集めるしくみなので、使った電気の何倍もの熱を出せます。電気ストーブより、同じ電気代でずっと多くの熱を出せるのが特徴です。ただし、外の気温が低い地域や、つけはじめは電気代が上がります。</p>
+    <h3>暖房費を下げるには？</h3>
+    <p>エアコンのフィルター掃除、窓の断熱（カーテン・断熱シート）、設定温度を1℃下げる、こたつや電気毛布と組み合わせる、といった方法があります。電気料金のプランを見直すのも効果的です。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>各暖房器具の消費電力・燃料の消費量は、一般的な機種を平均的に使った場合の目安です（ガス・灯油のファンヒーターは平均出力2.0kW、都市ガス45MJ/m³・プロパンガス約100MJ/m³・灯油約36.7MJ/Lで換算）。実際の費用は機種・部屋の広さ・断熱・外気温によって大きく変わります。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+// [名前, 電気W, 燃料の種類, 燃料の消費量（1時間あたり）, 部屋全体を暖めるか]
+const HEATERS = [
+  ["エアコン（6畳用）", 450, null, 0, true],
+  ["エアコン（14畳用）", 900, null, 0, true],
+  ["ガスファンヒーター（都市ガス）", 15, "cg", 2.0 * 3.6 / 45, true],
+  ["ガスファンヒーター（プロパンガス）", 15, "lp", 2.0 * 3.6 / 100.5, true],
+  ["石油ファンヒーター", 15, "k", 2.0 * 3.6 / 36.7, true],
+  ["オイルヒーター", 700, null, 0, true],
+  ["電気ストーブ・セラミックヒーター", 1000, null, 0, false],
+  ["こたつ", 200, null, 0, false],
+  ["ホットカーペット（2畳）", 250, null, 0, false],
+  ["電気毛布", 40, null, 0, false],
+];
+const UNIT = { cg: "m³", lp: "m³", k: "L" };
+
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const price = { e: num("e"), cg: num("cg"), lp: num("lp"), k: num("k") };
+  const h = num("hours"), d = num("days");
+  const rows = HEATERS.map(([name, w, fuel, use, room]) => {
+    const perHour = w / 1000 * price.e + (fuel ? use * price[fuel] : 0);
+    return { name, perHour, month: perHour * h * d, room, detail: `${w}W${fuel ? `＋約${Math.round(use * 1000) / 1000}${UNIT[fuel]}/時` : ""}` };
+  });
+  const roomRows = rows.filter(r => r.room).sort((a, b) => a.perHour - b.perHour);
+  const spotRows = rows.filter(r => !r.room).sort((a, b) => a.perHour - b.perHour);
+  const table = (list, title) => `<h2 style="margin-top:14px">${title}</h2><table class="info">
+    <tr><th>暖房器具</th><th class="num">1時間</th><th class="num">1か月</th></tr>
+    ${list.map((r, i) => `<tr class="${i === 0 ? "best" : ""}"><td>${r.name}<br><small style="color:var(--muted)">${r.detail}</small></td><td class="num">${n1(r.perHour)}円</td><td class="num">${yen(r.month)}</td></tr>`).join("")}</table>`;
+
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat good"><div class="k">部屋全体を暖める中でいちばん安い</div><div class="v" style="font-size:1rem">${roomRows[0].name}</div></div>
+      <div class="stat"><div class="k">その1か月の費用</div><div class="v">${yen(roomRows[0].month)}</div></div>
+      <div class="stat"><div class="k">使い方</div><div class="v" style="font-size:1rem">1日${h}時間 × ${d}日</div></div>
+    </div>
+    ${table(roomRows, "部屋全体を暖める暖房")}
+    ${table(spotRows, "体の近くを暖める暖房")}
+    <p class="note">エアコン＋こたつ・電気毛布のように組み合わせて、エアコンの設定温度を下げると、暖房費を抑えやすくなります。毎月の電気代そのものを下げたいなら、電気料金プランの見直しも効果的です → <a href="/denki/plan/">電気料金プラン 比較</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

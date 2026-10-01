@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>家電の買い替え 電気代比較｜冷蔵庫・エアコンを省エネ機種にすると何年で元が取れる？</title>
+<meta name="description" content="今の家電と新しい省エネ家電の年間消費電力量（カタログの値）と価格を入れるだけで、買い替えで1年にいくら電気代が下がるか、何年で元が取れるかを計算。冷蔵庫・エアコン・テレビなどに使える無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/denki/kaikae/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>家電の買い替え 電気代比較</h1>
+  <p class="lead">今の家電と、買い替えを考えている省エネ家電の<strong>年間消費電力量</strong>を比べて、<strong>電気代が1年でいくら下がるか</strong>、<strong>何年で元が取れるか</strong>を計算します。</p>
+
+  <div class="card">
+    <div class="field"><label for="kind">家電</label>
+      <select id="kind"><option value="ref">冷蔵庫</option><option value="ac">エアコン</option><option value="tv">テレビ</option><option value="other">そのほか</option></select></div>
+    <div class="row">
+      <div class="field"><label for="old">今の家電の年間消費電力量（kWh/年）</label><input type="number" id="old" min="0" value="600">
+        <div class="hint">本体のシールや取扱説明書に記載。古い機種は表示より多く使っていることもあります</div></div>
+      <div class="field"><label for="new">新しい家電の年間消費電力量（kWh/年）</label><input type="number" id="new" min="0" value="300">
+        <div class="hint">カタログ・販売サイトの「年間消費電力量」</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="price">新しい家電の価格（円）</label><input type="number" id="price" min="0" value="150000"></div>
+      <div class="field"><label for="rate">電気料金の単価（円/kWh）</label><input type="number" id="rate" min="0" step="0.1" value="31"></div>
+    </div>
+    <div class="field"><label for="years">使う予定の年数</label><input type="number" id="years" min="1" max="20" value="10"></div>
+    <button id="calc">計算する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>家電の買い替えのよくある質問</h2>
+    <h3>どの家電を買い替えると効果が大きい？</h3>
+    <p>一日中動いている冷蔵庫と、長い時間使うエアコンは、省エネ性能の差が電気代に表れやすい家電です。10年以上前の機種なら、最新の省エネ機種に変えると年間消費電力量が大きく下がることがあります。</p>
+    <h3>年間消費電力量はどこでわかる？</h3>
+    <p>冷蔵庫は本体の内側や側面のシール、エアコンは取扱説明書やカタログの「期間消費電力量」です。お店の省エネラベルにも、年間の目安の電気代と一緒に書かれています。</p>
+    <h3>電気代だけで元が取れなくても買い替えるべき？</h3>
+    <p>古い家電は故障のリスクが高く、冷蔵庫が壊れると食品がだめになるなどの損もあります。電気代の差に加えて、使っている年数や故障の心配もあわせて考えましょう。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>入力した年間消費電力量と単価にもとづく計算です。実際の電気代は使い方・設置環境によって変わります。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const DEF = { ref: [600, 300, 150000], ac: [1100, 700, 120000], tv: [250, 120, 100000], other: [300, 150, 50000] };
+$("kind").addEventListener("change", () => { const d = DEF[$("kind").value]; $("old").value = d[0]; $("new").value = d[1]; $("price").value = d[2]; });
+
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const rate = num("rate") || DEFAULT_RATE;
+  const save = (num("old") - num("new")) * rate;
+  const years = Math.floor(num("years"));
+  const price = num("price");
+  if (save <= 0) { out.innerHTML = '<p class="err">新しい家電の年間消費電力量が、今の家電と同じか多いため、電気代は下がりません。</p>'; return; }
+  const payback = price / save;
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat good"><div class="k">1年で下がる電気代</div><div class="v">${yen(save)}</div></div>
+      <div class="stat"><div class="k">元が取れるまで</div><div class="v">約${n1(payback)}年</div></div>
+      <div class="stat ${save * years >= price ? "good" : "warn"}"><div class="k">${years}年使った場合の差引</div><div class="v">${save * years >= price ? "+" : "−"}${yen(Math.abs(save * years - price))}</div></div>
+    </div>
+    <table class="info">
+      <tr><td>今の家電の電気代（年）</td><td class="num">${yen(num("old") * rate)}</td></tr>
+      <tr><td>新しい家電の電気代（年）</td><td class="num">${yen(num("new") * rate)}</td></tr>
+      <tr><td>${years}年間で下がる電気代の合計</td><td class="num">${yen(save * years)}</td></tr>
+    </table>
+    <p class="note">${payback <= years ? `${years}年使う場合、電気代の差だけで本体の価格の元が取れる計算です。` : `電気代の差だけでは${years}年で元が取れませんが、故障のリスクや使い勝手も含めて判断しましょう。`} 電気料金の単価そのものを下げたいなら → <a href="/denki/plan/">電気料金プラン 比較</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

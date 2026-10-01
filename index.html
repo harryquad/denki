@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>家電の電気代 計算ツール｜消費電力（W）と時間から1日・1か月・1年の電気代を計算</title>
+<meta name="description" content="エアコン・こたつ・冷蔵庫・ドライヤーなど、家電の消費電力（W）と使う時間を入れるだけで、1時間・1日・1か月・1年の電気代を計算。主な家電の目安の消費電力を選べて、複数の家電の合計もわかる無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/denki/">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>家電の電気代 計算ツール</h1>
+  <p class="lead">家電の<strong>消費電力（W）</strong>と<strong>使う時間</strong>から、<strong>1日・1か月・1年の電気代</strong>を計算します。主な家電は目安の値を選ぶだけで入力できます。複数の家電をまとめて計算することもできます。</p>
+
+  <div class="card">
+    <div class="field" style="max-width:280px"><label for="rate">電気料金の単価（円/kWh）</label><input type="number" id="rate" min="0" step="0.1" value="31">
+      <div class="hint">わからなければ目安の31円のまま。検針票の「電気料金 ÷ 使用量」でも計算できます</div></div>
+    <div id="rows"></div>
+    <div class="btns"><button id="add" class="sub">家電を追加</button><button id="calc">電気代を計算する</button></div>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>電気代の計算のよくある質問</h2>
+    <h3>電気代の計算方法は？</h3>
+    <p>「消費電力（kW）× 使った時間（時間）× 電気料金の単価（円/kWh）」で計算します。たとえば1,200Wのドライヤーを10分使うと、1.2kW × 1/6時間 × 31円 ＝ 約6.2円です。</p>
+    <h3>消費電力はどこでわかる？</h3>
+    <p>家電の本体のシールや取扱説明書に「消費電力 ○○W」と書かれています。エアコンやこたつのように、強さを自動で調整する家電は、表示の最大値より実際の平均の消費電力が小さくなります。このツールの目安の値は、平均的な使い方を想定した値です。</p>
+    <h3>電気代の単価31円とは？</h3>
+    <p>家電のカタログなどで使われている、全国家庭電気製品公正取引協議会の「目安単価（31円/kWh・税込）」です。実際の単価は契約している電力会社やプラン、燃料費調整額などで変わります。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>目安の消費電力は、一般的な機種・使い方を想定した平均的な値です。実際の電気代は機種・設定・季節によって変わります。</footer>
+</div>
+
+<script src="assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+// [名前, 平均の消費電力W, 1日の使用時間h]
+const PRESETS = [
+  ["エアコン（暖房・6畳用）", 450, 8], ["エアコン（暖房・14畳用）", 900, 8], ["エアコン（冷房・6畳用）", 300, 8],
+  ["こたつ", 200, 4], ["ホットカーペット（2畳）", 250, 4], ["電気ストーブ・セラミックヒーター", 1000, 3],
+  ["オイルヒーター", 700, 8], ["電気毛布", 40, 8], ["加湿器（スチーム式）", 300, 8],
+  ["冷蔵庫（400L前後）", 35, 24], ["テレビ（50型）", 120, 4], ["照明（LED）", 10, 6],
+  ["電子レンジ", 1000, 0.15], ["炊飯器（炊飯）", 300, 0.7], ["電気ケトル", 1250, 0.1],
+  ["ドライヤー", 1200, 0.17], ["洗濯乾燥機（乾燥）", 1000, 1.5], ["浴室乾燥機", 1250, 2],
+  ["パソコン（ノート）", 40, 6], ["パソコン（デスクトップ）", 200, 4], ["ゲーム機", 120, 2], ["そのほか（自分で入力）", 100, 1],
+];
+function addRow(i = 0) {
+  const [name, w, h] = PRESETS[i];
+  const el = document.createElement("div");
+  el.className = "it";
+  el.innerHTML = `
+    <div class="nm"><label>家電</label><select class="p">${PRESETS.map((p, k) => `<option value="${k}" ${k === i ? "selected" : ""}>${p[0]}</option>`).join("")}</select></div>
+    <div><label>消費電力（W）</label><input type="number" class="w" min="0" value="${w}"></div>
+    <div><label>1日の時間</label><input type="number" class="h" min="0" max="24" step="0.05" value="${h}"></div>
+    <div><label>月の日数</label><input type="number" class="d" min="0" max="31" value="30"></div>
+    <button type="button" class="rm" aria-label="削除">×</button>`;
+  el.querySelector(".p").addEventListener("change", e => { const p = PRESETS[e.target.value]; el.querySelector(".w").value = p[1]; el.querySelector(".h").value = p[2]; });
+  el.querySelector(".rm").addEventListener("click", () => el.remove());
+  $("rows").appendChild(el);
+}
+
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const rate = num("rate") || DEFAULT_RATE;
+  const items = [...document.querySelectorAll("#rows .it")].map(el => {
+    const g = c => Math.max(0, Number(el.querySelector(c).value) || 0);
+    const name = PRESETS[el.querySelector(".p").value][0];
+    const kwhDay = g(".w") / 1000 * g(".h");
+    return { name, w: g(".w"), hour: g(".w") / 1000 * rate, day: kwhDay * rate, month: kwhDay * g(".d") * rate, year: kwhDay * g(".d") * 12 * rate, kwhMonth: kwhDay * g(".d") };
+  }).filter(x => x.w > 0);
+  if (!items.length) { out.innerHTML = '<p class="err">家電を1つ以上入力してください。</p>'; return; }
+  const total = items.reduce((s, x) => s + x.month, 0);
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat warn"><div class="k">1か月の電気代（合計）</div><div class="v">${yen(total)}</div></div>
+      <div class="stat"><div class="k">1年の電気代（合計）</div><div class="v">${yen(total * 12)}</div></div>
+      <div class="stat"><div class="k">1か月の使用量</div><div class="v">${n1(items.reduce((s, x) => s + x.kwhMonth, 0))}kWh</div></div>
+    </div>
+    <div style="overflow-x:auto"><table class="info">
+      <tr><th>家電</th><th class="num">1時間</th><th class="num">1日</th><th class="num">1か月</th><th class="num">1年</th></tr>
+      ${items.map(x => `<tr><td>${x.name}<br><small style="color:var(--muted)">${x.w}W</small></td><td class="num">${n1(x.hour)}円</td><td class="num">${yen(x.day)}</td><td class="num">${yen(x.month)}</td><td class="num">${yen(x.year)}</td></tr>`).join("")}
+    </table></div>
+    <p class="note">単価${rate}円/kWhで計算しています。暖房器具のどれが安いかは → <a href="/denki/danbou/">暖房器具の比較</a> ／ 電気の契約を見直すといくら変わるかは → <a href="/denki/plan/">電気料金プラン 比較</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("add").addEventListener("click", () => addRow(PRESETS.length - 1));
+$("calc").addEventListener("click", calc);
+[0, 3, 9].forEach(addRow);
+</script>
+</body>
+</html>

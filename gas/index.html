@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ガス代 計算ツール｜使用量からガス代、お風呂1回・シャワーのガス代（都市ガス・プロパン）</title>
+<meta name="description" content="ガスの使用量（m³）と単価からガス代を計算。お湯の量と水温から、お風呂1回・シャワー1回のガス代も計算できます。冬と夏の違い、都市ガスとプロパンガス、エコジョーズの節約効果もわかる無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/denki/gas/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ガス代 計算ツール</h1>
+  <p class="lead">ガスの使用量からガス代を計算します。お湯の量と水温から、<strong>お風呂1回・シャワー1回のガス代</strong>も計算できます。冬は水が冷たいため、同じお湯でもガス代が高くなります。</p>
+
+  <div class="card">
+    <h2>ガスの種類と単価</h2>
+    <div class="row">
+      <div class="field"><label for="type">ガスの種類</label>
+        <select id="type"><option value="city">都市ガス</option><option value="lp">プロパンガス（LPガス）</option></select></div>
+      <div class="field"><label for="price">ガスの単価（円/m³）</label><input type="number" id="price" min="0" value="180"><div class="hint">検針票の料金表。わからなければ「ガス料金 ÷ 使用量」</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="base">基本料金（円/月）</label><input type="number" id="base" min="0" value="1000"></div>
+      <div class="field"><label for="m3">1か月の使用量（m³）</label><input type="number" id="m3" min="0" step="0.1" value="30"></div>
+    </div>
+    <h2>お風呂・シャワー</h2>
+    <div class="row">
+      <div class="field"><label for="season">季節（水道水の温度）</label>
+        <select id="season"><option value="8">冬（水温 約8℃）</option><option value="15">春・秋（水温 約15℃）</option><option value="23">夏（水温 約23℃）</option></select></div>
+      <div class="field"><label for="heater">給湯器</label>
+        <select id="heater"><option value="0.8">従来型（効率 約80%）</option><option value="0.95">エコジョーズ（効率 約95%）</option></select></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="bath">浴槽のお湯の量（L）</label><input type="number" id="bath" min="0" value="200"><div class="hint">一般的な浴槽は180〜200L</div></div>
+      <div class="field"><label for="shower">シャワーの時間（分）</label><input type="number" id="shower" min="0" value="10"><div class="hint">1分あたり約12Lとして計算</div></div>
+    </div>
+    <button id="calc">計算する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>ガス代のよくある質問</h2>
+    <h3>冬にガス代が上がるのはなぜ？</h3>
+    <p>水道水の温度が夏は20℃台、冬は10℃以下まで下がるため、同じ40℃のお湯をつくるのに、冬は夏の約2倍のガスが必要になります。お風呂やシャワー、食器洗いのお湯の量が同じでも、冬はガス代が高くなります。</p>
+    <h3>都市ガスとプロパンガスはどちらが高い？</h3>
+    <p>プロパンガスは1m³あたりの熱量が都市ガスの約2.2倍ありますが、単価が高いため、同じ量のお湯をわかす費用は都市ガスより高くなることが多いです。プロパンガスは料金が自由に決められるため、会社によって料金に大きな差があります。</p>
+    <h3>お風呂とシャワー、どちらが安い？</h3>
+    <p>浴槽200Lのお湯は、シャワー約16分分にあたります。1人ならシャワーの方が安いことが多く、家族で続けて入るならお風呂の方が安くなりやすいです。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>都市ガスは1m³あたり45MJ、プロパンガスは約100MJとして計算しています。お湯の温度は40℃、お湯の量を1℃上げるのに必要な熱量は1Lあたり4.186kJです。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const MJ = { city: 45, lp: 100.5 };
+$("type").addEventListener("change", () => { $("price").value = $("type").value === "city" ? 180 : 650; });
+
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const type = $("type").value, price = num("price");
+  const monthly = num("base") + num("m3") * price;
+  const water = Number($("season").value), eff = Number($("heater").value);
+  const costFor = liters => { const mj = liters * (40 - water) * 4.186 / 1000 / eff; const m3 = mj / MJ[type]; return { m3, yen: m3 * price }; };
+  const bath = costFor(num("bath")), shower = costFor(num("shower") * 12);
+  const bathSummer = (() => { const mj = num("bath") * (40 - 23) * 4.186 / 1000 / eff; return mj / MJ[type] * price; })();
+  const ecoSave = eff < 0.9 ? bath.yen - bath.yen * eff / 0.95 : 0;
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat warn"><div class="k">1か月のガス代</div><div class="v">${yen(monthly)}</div></div>
+      <div class="stat"><div class="k">お風呂1回</div><div class="v">${n1(bath.yen)}円</div></div>
+      <div class="stat"><div class="k">シャワー${num("shower")}分</div><div class="v">${n1(shower.yen)}円</div></div>
+    </div>
+    <table class="info">
+      <tr><td>1か月のガス代（基本料金 ${yen(num("base"))} ＋ ${num("m3")}m³ × ${price}円）</td><td class="num">${yen(monthly)}</td></tr>
+      <tr><td>お風呂1回（${num("bath")}L・ガス約${Math.round(bath.m3 * 100) / 100}m³）</td><td class="num">${n1(bath.yen)}円</td></tr>
+      <tr><td>お風呂を毎日わかした場合（1か月）</td><td class="num">${yen(bath.yen * 30)}</td></tr>
+      <tr><td>シャワー${num("shower")}分（約${num("shower") * 12}L）</td><td class="num">${n1(shower.yen)}円</td></tr>
+      <tr><td>（参考）夏にお風呂1回</td><td class="num">${n1(bathSummer)}円</td></tr>
+    </table>
+    ${ecoSave ? `<p class="note">エコジョーズ（高効率給湯器）なら、お風呂1回あたり約${n1(ecoSave)}円、1年（毎日）で約${yen(ecoSave * 365)}安くなる計算です。</p>` : ""}
+    <p class="note">${type === "lp" ? "プロパンガスは会社によって単価が大きく違います。今の単価が高いと感じたら、ほかの会社の料金と比べてみましょう。" : "ガスと電気をまとめて契約するとセット割で安くなる会社もあります。"} ほかの家庭と比べて高いかどうかは → <a href="/denki/shindan/">電気代・ガス代 診断</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

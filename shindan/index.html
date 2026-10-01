@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電気代・ガス代 診断｜世帯人数・季節別の平均と比べて高い？（総務省 家計調査）</title>
+<meta name="description" content="世帯人数と今月の電気代・ガス代を入れるだけで、総務省「家計調査」の世帯人数別・季節別の平均と比べて高いか安いかを診断。冬の電気代が高い原因と、下げる方法もわかる無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/denki/shindan/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>.meter{height:14px;background:var(--bg);border-radius:99px;position:relative;margin:10px 0 4px}.meter span{position:absolute;top:-4px;width:4px;height:22px;background:var(--text);border-radius:2px}.meter i{position:absolute;left:0;top:0;height:100%;border-radius:99px}</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/denki/">電気代・ガス代 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>電気代・ガス代 診断</h1>
+  <p class="lead">世帯人数と今月の電気代・ガス代から、総務省「家計調査」の<strong>世帯人数別・季節別の平均</strong>と比べて、<strong>高いか安いか</strong>を診断します。</p>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label for="people">世帯人数</label>
+        <select id="people"><option value="1">1人</option><option value="2" selected>2人</option><option value="3">3人</option><option value="4">4人</option><option value="5">5人</option><option value="6">6人以上</option></select></div>
+      <div class="field"><label for="month">何月分の料金？</label>
+        <select id="month"></select></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="elec">電気代（1か月）</label><input type="number" id="elec" min="0" value="18000"><div class="hint">円単位</div></div>
+      <div class="field"><label for="gas">ガス代（1か月）</label><input type="number" id="gas" min="0" value="6000"><div class="hint">円単位。オール電化なら0</div></div>
+    </div>
+    <div class="field"><label for="gtype">ガスの種類</label>
+      <select id="gtype"><option value="city">都市ガス</option><option value="lp">プロパンガス（LPガス）</option><option value="none">ガスを使っていない（オール電化）</option></select></div>
+    <button id="calc">診断する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>電気代・ガス代のよくある質問</h2>
+    <h3>冬の電気代が高いのはなぜ？</h3>
+    <p>暖房を使う時間が長いことに加えて、外の気温が低いとエアコンの効率が下がること、給湯や照明の時間が増えることが理由です。家計調査でも、1〜3月の電気代は1年の平均より2〜3割ほど高くなっています。</p>
+    <h3>プロパンガスは高い？</h3>
+    <p>プロパンガスは自由料金で、同じ量を使っても都市ガスの1.5〜2倍ほどになることが多いです。料金が高いと感じたら、ほかのプロパンガス会社の料金と比べてみる価値があります。</p>
+    <h3>電気代を下げるいちばんの方法は？</h3>
+    <p>使い方の工夫に加えて、電気料金のプラン（電力会社）を見直すことです。使い方を変えずに毎月の電気代が下がることがあります。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>平均は総務省「家計調査」より。電気代は2025年5月〜2026年4月の世帯人数別の月平均、季節による差は2025年の季節別の平均（1〜3月・4〜6月・7〜9月・10〜12月）から計算しています。ガス代は2025年の世帯人数別の月平均（都市ガス・プロパンガスの合計）です。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+$("month").innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}月</option>`).join("");
+$("month").value = new Date().getMonth() + 1;
+const ELEC = { 1: 6756, 2: 11890, 3: 13593, 4: 13862, 5: 15196, 6: 17082 };
+const GAS = { 1: 2999, 2: 4663, 3: 5096, 4: 5112, 5: 4877, 6: 5361 };
+// 季節による差（2025年の季節別平均 ÷ 年平均）[1〜3月, 4〜6月, 7〜9月, 10〜12月]
+const SEASON = { single: [9295, 6743, 6822, 6704], multi: [16005, 12578, 12442, 11849] };
+const factor = (people, m) => { const s = SEASON[people === 1 ? "single" : "multi"]; const avg = s.reduce((a, b) => a + b) / 4; return s[Math.floor((m - 1) / 3)] / avg; };
+
+function verdict(mine, avg) {
+  const r = mine / avg;
+  if (r <= 0.85) return ["安い", "good"];
+  if (r <= 1.15) return ["平均くらい", ""];
+  if (r <= 1.4) return ["やや高い", "warn"];
+  return ["高い", "warn"];
+}
+function meter(mine, avg) {
+  const pct = Math.min(100, mine / (avg * 2) * 100);
+  return `<div class="meter"><i style="width:${pct}%;background:${mine > avg * 1.15 ? "var(--warn)" : "var(--good)"}"></i><span style="left:50%"></span></div><div class="hint">真ん中の線が平均</div>`;
+}
+
+function calc() {
+  const out = $("result");
+  out.hidden = false;
+  const p = Number($("people").value), m = Number($("month").value);
+  const elec = num("elec"), gas = num("gas"), gtype = $("gtype").value;
+  const eAvg = ELEC[p] * factor(p, m);
+  const ev = verdict(elec, eAvg);
+  const gAvg = GAS[p];
+  const gv = gtype === "none" ? null : verdict(gas, gtype === "lp" ? gAvg * 1.6 : gAvg);
+  const tips = [];
+  if (elec > eAvg * 1.15) tips.push("電気料金のプラン（電力会社）を見直す。使い方を変えなくても安くなることがあります。");
+  if (m <= 3 || m === 12) tips.push("暖房はエアコン＋こたつ・電気毛布の組み合わせにして、エアコンの設定温度を下げる。");
+  if (gtype === "lp" && gas > gAvg * 1.6) tips.push("プロパンガスの料金をほかの会社と比べる。会社を変えると安くなることがあります。");
+  if (gtype === "city" && gas > gAvg * 1.3) tips.push("お風呂の追いだきを減らす、シャワーの時間を短くするなど、給湯の使い方を見直す。");
+  tips.push("古い冷蔵庫やエアコンは、省エネ機種に買い替えると電気代が大きく下がることがあります。");
+
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat ${ev[1]}"><div class="k">電気代の診断</div><div class="v">${ev[0]}</div></div>
+      <div class="stat"><div class="k">${p === 6 ? "6人以上" : p + "人"}世帯・${m}月の平均（目安）</div><div class="v">${yen(eAvg)}</div></div>
+      <div class="stat ${elec > eAvg ? "warn" : "good"}"><div class="k">平均との差</div><div class="v">${elec >= eAvg ? "+" : "−"}${yen(Math.abs(elec - eAvg))}</div></div>
+    </div>
+    ${meter(elec, eAvg)}
+    ${gv ? `<h2 style="margin-top:16px">ガス代</h2>
+      <table class="info"><tr><td>あなたのガス代</td><td class="num">${yen(gas)}</td></tr>
+      <tr><td>${p === 6 ? "6人以上" : p + "人"}世帯の平均（年平均）</td><td class="num">${yen(gAvg)}</td></tr>
+      <tr><td>診断</td><td class="num">${gv[0]}</td></tr></table>
+      ${gtype === "lp" ? '<p class="note">プロパンガスは都市ガスより高いのがふつうなので、平均の約1.6倍を基準に診断しています。</p>' : ""}
+      ${m <= 3 || m === 12 ? '<p class="note">冬はお湯をわかす量が増えるため、ガス代は年平均より高くなりやすい時期です。</p>' : ""}` : ""}
+    <h2 style="margin-top:16px">光熱費を下げるには</h2>
+    <ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul>
+    <p class="note">今のプランと別のプランでいくら変わるかは → <a href="/denki/plan/">電気料金プラン 比較</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

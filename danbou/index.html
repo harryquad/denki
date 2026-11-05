@@ -31,12 +31,12 @@
   <div class="card">
     <h2>単価</h2>
     <div class="row">
-      <div class="field"><label for="e">電気（円/kWh）</label><input type="number" id="e" min="0" step="0.1" value="31"></div>
-      <div class="field"><label for="k">灯油（円/L）</label><input type="number" id="k" min="0" value="120"><div class="hint">最近の購入価格を入れてください</div></div>
+      <div class="field"><label for="e">電気（円/kWh）</label><input type="number" id="e" min="0" step="0.1" value="31"><div class="hint">家電カタログの目安単価です。実際の請求はこれより高いことがあります</div></div>
+      <div class="field"><label for="k">灯油（円/L）</label><input type="number" id="k" min="0" value="144"><div class="hint">2026年11月の店頭価格の全国平均の目安（18L約2,590円）。最近の購入価格があれば入れてください</div></div>
     </div>
     <div class="row">
-      <div class="field"><label for="cg">都市ガス（円/m³）</label><input type="number" id="cg" min="0" value="180"><div class="hint">検針票の「ガス料金 ÷ 使用量」</div></div>
-      <div class="field"><label for="lp">プロパンガス（円/m³）</label><input type="number" id="lp" min="0" value="650"></div>
+      <div class="field"><label for="cg">都市ガス（円/m³）</label><input type="number" id="cg" min="0" value="180"><div class="hint">検針票の単位料金（基本料金を除く）。例：東京ガスは2026年12月検針分で約184円（月20〜80m³）</div></div>
+      <div class="field"><label for="lp">プロパンガス（円/m³）</label><input type="number" id="lp" min="0" value="730"><div class="hint">基本料金を除く目安。2026年10月の全国平均の料金（10m³と20m³）の差から計算</div></div>
     </div>
     <h2>使い方</h2>
     <div class="row">
@@ -58,13 +58,15 @@
     <p>エアコンは、電気の力で外の空気の熱を集めるしくみなので、使った電気の何倍もの熱を出せます。電気ストーブより、同じ電気代でずっと多くの熱を出せるのが特徴です。ただし、外の気温が低い地域や、つけはじめは電気代が上がります。</p>
     <h3>暖房費を下げるには？</h3>
     <p>エアコンのフィルター掃除、窓の断熱（カーテン・断熱シート）、設定温度を1℃下げる、こたつや電気毛布と組み合わせる、といった方法があります。電気料金のプランを見直すのも効果的です。</p>
+    <h3>この冬の電気・ガス代の補助はある？</h3>
+    <p>政府の値引きがあります。低圧の電気は2026年12月使用分が1kWhあたり1.0円、2027年1・2月使用分が4.5円、都市ガスは同じ月に1m³あたり4.0円、18.0円です。プロパンガスは対象外です。灯油は別の補助があり、店頭価格は補助の額によって変わります。</p>
   </div>
 
   <div class="card" id="related"></div>
 
-  <footer>各暖房器具の消費電力・燃料の消費量は、一般的な機種を平均的に使った場合の目安です（ガス・灯油のファンヒーターは平均出力2.0kW、都市ガス45MJ/m³・プロパンガス約100MJ/m³・灯油約36.7MJ/Lで換算）。実際の費用は機種・部屋の広さ・断熱・外気温によって大きく変わります。</footer>
+  <footer>各暖房器具の消費電力・燃料の消費量は、一般的な機種を平均的に使った場合の目安です（ガス・灯油のファンヒーターは平均出力2.0kW、都市ガス45MJ/m³・プロパンガス約100MJ/m³・灯油約36.7MJ/Lで換算）。単価の初期値は2026年11月時点の目安で、政府の値引きは含めていません。実際の費用は機種・部屋の広さ・断熱・外気温によって大きく変わります。</footer>
 <!--sw-foot-->
-<div style="font-size:.8rem;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:14px"><p style="margin:0 0 10px">あわせて使いたい：<a href="/kaden/">家電の電気代 早見表</a>・<a href="/hikkoshi/">引っ越し・賃貸 かんたん計算</a></p><p style="margin:0 0 6px;font-weight:600">計算の根拠（公的機関などの情報）</p><ul style="margin:0 0 10px;padding-left:1.2em"><li><a href="https://www.eftc.or.jp/" target="_blank" rel="noopener">全国家庭電気製品公正取引協議会（電気代の目安単価）</a></li><li><a href="https://www.stat.go.jp/data/kakei/" target="_blank" rel="noopener">総務省統計局 家計調査</a></li></ul><p style="margin:0 0 10px">最終更新日：2026年10月31日</p><nav style="display:flex;flex-wrap:wrap;gap:6px 16px"><a href="/sites/">お金の計算サイト一覧</a><a href="/about/">運営者情報</a><a href="/privacy/">プライバシーポリシー</a><a href="/contact/">お問い合わせ</a></nav></div>
+<div style="font-size:.8rem;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:14px"><p style="margin:0 0 10px">あわせて使いたい：<a href="/kaden/">家電の電気代 早見表</a>・<a href="/hikkoshi/">引っ越し・賃貸 かんたん計算</a></p><p style="margin:0 0 6px;font-weight:600">計算の根拠（公的機関などの情報）</p><ul style="margin:0 0 10px;padding-left:1.2em"><li><a href="https://www.eftc.or.jp/" target="_blank" rel="noopener">全国家庭電気製品公正取引協議会（電気代の目安単価）</a></li><li><a href="https://www.stat.go.jp/data/kakei/" target="_blank" rel="noopener">総務省統計局 家計調査</a></li><li><a href="https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/" target="_blank" rel="noopener">資源エネルギー庁 石油製品価格調査</a></li><li><a href="https://oil-info.ieej.or.jp/price/price_ippan_lp_maitsuki.html" target="_blank" rel="noopener">石油情報センター 価格情報（LPガス）</a></li><li><a href="https://www.tokyo-gas.co.jp/news/press/20261029-03.html" target="_blank" rel="noopener">東京ガス 2026年12月検針分のガス料金</a></li><li><a href="https://denkigas-gekihenkanwa.go.jp/" target="_blank" rel="noopener">電気・ガス料金の値引き（政府の公式サイト）</a></li></ul><p style="margin:0 0 10px">最終更新日：2026年11月3日</p><nav style="display:flex;flex-wrap:wrap;gap:6px 16px"><a href="/sites/">お金の計算サイト一覧</a><a href="/about/">運営者情報</a><a href="/privacy/">プライバシーポリシー</a><a href="/contact/">お問い合わせ</a></nav></div>
 <!--/sw-foot-->
 </div>
 
